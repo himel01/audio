@@ -1,7 +1,9 @@
 import 'package:audio_stream/browser.dart';
+import 'package:audio_stream/offLine_player.dart';
 import 'package:audio_stream/player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -9,6 +11,11 @@ Future<void> main() async {
   // Plugin must be initialized before using
 
   await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
+  // await JustAudioBackground.init(
+  //   androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
+  //   androidNotificationChannelName: 'Audio playback',
+  //   androidNotificationOngoing: true,
+  // );
 
   runApp(const MyApp());
 }
@@ -41,6 +48,45 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController t =
       TextEditingController(text: "https://www.harlancoben.com/audio-samples");
 
+  showAlertDialog(BuildContext context, String url) {
+    Widget onButton = TextButton(
+      child: Text("Online"),
+      onPressed: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => Player()),
+        );
+      },
+    );
+    Widget offButton = TextButton(
+      child: Text("Offline"),
+      onPressed: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => Offline()),
+        );
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Which one?"),
+      content: Text(""),
+      actions: [onButton, offButton],
+      elevation: 1.0,
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,10 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Player()),
-                  );
+                  showAlertDialog(context, "");
                 },
                 child: Text("Go to Player")),
           ],
@@ -84,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class GlobalValues {
-   static List<String> _onlineSongsUrl=[];
+  static List<String> _onlineSongsUrl = [];
 
   addToList(String url) {
     print("add to list called");
@@ -98,7 +141,8 @@ class GlobalValues {
   clearList() {
     _onlineSongsUrl.clear();
   }
-  printLength(){
+
+  printLength() {
     print("length is ${_onlineSongsUrl.length}");
   }
 }

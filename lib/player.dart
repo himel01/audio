@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 class Player extends StatefulWidget {
   const Player({Key? key}) : super(key: key);
@@ -16,6 +17,71 @@ class _PlayerState extends State<Player> {
   bool isPlaying = false;
   List<String> list = [];
 
+  // final playlist = ConcatenatingAudioSource(
+  //   // Start loading next item just before reaching it
+  //     useLazyPreparation: true,
+  //     // Customise the shuffle algorithm
+  //     shuffleOrder: DefaultShuffleOrder(),
+  //     // Specify the playlist items
+  //     children: [
+  // AudioSource.uri(Uri.parse('https://example.com/track1.mp3')
+  //
+  // )
+  //
+  // ,
+  //
+  // AudioSource.uri();
+  //
+  // AudioSource.uri
+  //
+  // (
+  //
+  // Uri.parse
+  //
+  // (
+  //
+  // '
+  //
+  // https://example.com/track2.mp3
+  //
+  // '
+  //
+  // )
+  //
+  // )
+  //
+  // ,
+  //
+  // AudioSource.uri
+  //
+  // (
+  //
+  // Uri.parse
+  //
+  // (
+  //
+  // '
+  //
+  // https://example.com/track3.mp3
+  //
+  // '
+  //
+  // )
+  //
+  // )
+  //
+  // ,
+  //
+  // ]
+  //
+  // ,
+  //
+  // );
+
+  var i = 0.5;
+
+  var s = 1.0;
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +90,11 @@ class _PlayerState extends State<Player> {
     ));
     _init();
     getList();
+    // await player.pause();                           // Pause but remain ready to play
+    // await player.seek(Duration(second: 10));        // Jump to the 10 second position
+    // await player.setSpeed(2.0);                     // Twice as fast
+    // await player.setVolume(0.5);                    // Half as loud
+    // await player.stop();
   }
 
   void getList() {
@@ -42,7 +113,16 @@ class _PlayerState extends State<Player> {
     });
     try {
       await _player.setAudioSource(AudioSource.uri(
-          Uri.parse("https://www.harlancoben.com/audio/CaughtSample.mp3")));
+        Uri.parse("https://www.harlancoben.com/audio/CaughtSample.mp3"),
+        tag: MediaItem(
+          // Specify a unique ID for each media item:
+          id: '1',
+          // Metadata to display in the notification:
+          album: "Album name",
+          title: "Song name",
+          artUri: Uri.parse('https://example.com/albumart.jpg'),
+        ),
+      ));
     } catch (e) {
       print("Error loading audio source: $e");
     }
@@ -96,20 +176,40 @@ class _PlayerState extends State<Player> {
                                 border: Border.all(
                                   color: Colors.blue,
                                 ),
-                                borderRadius: BorderRadius.all(Radius.circular(20))
-                            ),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20))),
                             alignment: Alignment.center,
                           ),
                           onTap: () async {
                             changeIcon();
                             if (_player.playing) {
                               _player.stop();
-                              await _player.setAudioSource(
-                                  AudioSource.uri(Uri.parse(list[index])));
+                              await _player.setAudioSource(AudioSource.uri(
+                                Uri.parse(list[index]),
+                                tag: MediaItem(
+                                  // Specify a unique ID for each media item:
+                                  id: '1',
+                                  // Metadata to display in the notification:
+                                  album: "Album name",
+                                  title: "Song name",
+                                  artUri: Uri.parse(
+                                      'https://example.com/albumart.jpg'),
+                                ),
+                              ));
                               _player.play();
                             } else {
-                              await _player.setAudioSource(
-                                  AudioSource.uri(Uri.parse(list[index])));
+                              await _player.setAudioSource(AudioSource.uri(
+                                Uri.parse(list[index]),
+                                tag: MediaItem(
+                                  // Specify a unique ID for each media item:
+                                  id: '1',
+                                  // Metadata to display in the notification:
+                                  album: "Album name",
+                                  title: "Song name",
+                                  artUri: Uri.parse(
+                                      'https://example.com/albumart.jpg'),
+                                ),
+                              ));
                               _player.play();
                             }
                           },
@@ -129,14 +229,26 @@ class _PlayerState extends State<Player> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     //_player.play();
+                    await _player.seekToPrevious();
                   },
                   child: Icon(Icons.skip_previous),
                   style: ElevatedButton.styleFrom(
                       shape: BeveledRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   )),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    var t = await _player.position.inSeconds;
+                    await _player.seek(Duration(seconds: t - 10));
+                  },
+                  child: Icon(Icons.arrow_back_ios_sharp),
+                  style: OutlinedButton.styleFrom(
+                    shape: CircleBorder(),
+                    padding: EdgeInsets.all(24),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -155,9 +267,21 @@ class _PlayerState extends State<Player> {
                     padding: EdgeInsets.all(24),
                   ),
                 ),
+                OutlinedButton(
+                  onPressed: () async {
+                    var t = await _player.position.inSeconds;
+                    await _player.seek(Duration(seconds: t + 10));
+                  },
+                  child: Icon(Icons.arrow_forward_ios),
+                  style: OutlinedButton.styleFrom(
+                    shape: CircleBorder(),
+                    padding: EdgeInsets.all(24),
+                  ),
+                ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     //_player.play();
+                    await _player.seekToNext();
                   },
                   child: Icon(Icons.skip_next),
                   style: ElevatedButton.styleFrom(
@@ -167,6 +291,58 @@ class _PlayerState extends State<Player> {
                 ),
               ],
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                OutlinedButton(
+                  onPressed: () async {
+                    //await player.pause();                           // Pause but remain ready to play
+                    //await player.seek(Duration(second: 10));        // Jump to the 10 second position
+                    //await player.setSpeed(2.0);
+
+                    // Half as loud
+                    await _player.setVolume(i = i - 0.1); // Half as loud
+                    //await player.stop();
+                  },
+                  child: Icon(Icons.remove),
+                  style: OutlinedButton.styleFrom(
+                    shape: CircleBorder(),
+                    padding: EdgeInsets.all(24),
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    await _player.setVolume(i = i + 0.1);
+                  },
+                  child: Icon(Icons.add),
+                  style: OutlinedButton.styleFrom(
+                    shape: CircleBorder(),
+                    padding: EdgeInsets.all(24),
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    await _player.setSpeed(s = s + 0.2);
+                  },
+                  child: Text("Speed+"),
+                  style: OutlinedButton.styleFrom(
+                    shape: CircleBorder(),
+                    padding: EdgeInsets.all(24),
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    await _player.setSpeed(s = s - 0.2);
+                  },
+                  child: Text("Speed-"),
+                  style: OutlinedButton.styleFrom(
+                    shape: CircleBorder(),
+                    padding: EdgeInsets.all(24),
+                  ),
+                ),
+              ],
+            ),
+            //ControlButtons(_player),
           ],
         ),
       ),

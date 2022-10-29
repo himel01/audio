@@ -98,14 +98,15 @@ class _BrowserState extends State<Browser> {
         }
         location = path;
         final savedDir = Directory(path);
+        //String name = url.split("/")[4];
         await savedDir.create(recursive: true).then((value) async {
           final taskId = await FlutterDownloader.enqueue(
-            url: url,
-            headers: {},
-            savedDir: path,
-            showNotification: true,
-            openFileFromNotification: true,
-          );
+              url: url,
+              headers: {},
+              savedDir: path,
+              showNotification: true,
+              openFileFromNotification: true,
+              saveInPublicStorage: true);
           print("task id is $taskId");
         });
       }
