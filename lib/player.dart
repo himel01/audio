@@ -12,12 +12,11 @@ class Player extends StatefulWidget {
 
 class _PlayerState extends State<Player> {
   final _player = AudioPlayer();
-  bool isPlaying=false;
+  bool isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    //ambiguate(WidgetsBinding.instance)!.addObserver(this);
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.black,
     ));
@@ -25,18 +24,13 @@ class _PlayerState extends State<Player> {
   }
 
   Future<void> _init() async {
-    // Inform the operating system of our app's audio attributes etc.
-    // We pick a reasonable default for an app that plays speech.
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.speech());
-    // Listen to errors during playback.
     _player.playbackEventStream.listen((event) {},
         onError: (Object e, StackTrace stackTrace) {
       print('A stream error occurred: $e');
     });
-    // Try to load audio from a source and catch any errors.
     try {
-      // AAC example: https://dl.espressif.com/dl/audio/ff-16b-2c-44100hz.aac
       await _player.setAudioSource(AudioSource.uri(
           Uri.parse("https://www.harlancoben.com/audio/CaughtSample.mp3")));
     } catch (e) {
@@ -46,20 +40,18 @@ class _PlayerState extends State<Player> {
 
   @override
   void dispose() {
-    //ambiguate(WidgetsBinding.instance)!.removeObserver(this);
-    // Release decoders and buffers back to the operating system making them
-    // available for other apps to use.
     _player.dispose();
     super.dispose();
   }
-  changeIcon(){
-    if(_player.playing){
+
+  changeIcon() {
+    if (_player.playing) {
       setState(() {
-        isPlaying=false;
+        isPlaying = false;
       });
-    }else{
+    } else {
       setState(() {
-        isPlaying=true;
+        isPlaying = true;
       });
     }
   }
@@ -67,9 +59,6 @@ class _PlayerState extends State<Player> {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      // Release the player's resources when not in use. We use "stop" so that
-      // if the app resumes later, it will still remember what position to
-      // resume from.
       _player.stop();
     }
   }
@@ -89,7 +78,6 @@ class _PlayerState extends State<Player> {
                 ElevatedButton(
                   onPressed: () {
                     //_player.play();
-
                   },
                   child: Icon(Icons.skip_previous),
                   style: ElevatedButton.styleFrom(
