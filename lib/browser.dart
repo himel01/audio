@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:audio_stream/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -26,6 +26,47 @@ class _BrowserState extends State<Browser> {
 
   void _unbindBackgroundIsolate() {
     IsolateNameServer.removePortNameMapping('downloader_send_port');
+  }
+
+  showAlertDialog(BuildContext context, String url) {
+    // set up the button
+    Widget okButton = TextButton(
+      child: Text("Download for Offline Player"),
+      onPressed: () {
+        downLoad(url);
+        Navigator.pop(context);
+      },
+    );
+    Widget noButton = TextButton(
+      child: Text("No"),
+      onPressed: () {
+        Navigator.pop(context);
+      },
+    );
+    Widget saveButton = TextButton(
+      child: Text("Save for Online Player"),
+      onPressed: () {
+        GlobalValues().addToList(url);
+        GlobalValues().printLength();
+        Navigator.pop(context);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Download"),
+      content: Text(
+          "This site contains downloadable mp3 file. Do you want to download?"),
+      actions: [okButton, saveButton, noButton],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 
   void _bindBackgroundIsolate() {
@@ -113,7 +154,8 @@ class _BrowserState extends State<Browser> {
             });
             print(value);
             if (value.contains(".mp3")) {
-              downLoad(value);
+              showAlertDialog(context, value);
+              //downLoad(value);
             }
           },
           onPageFinished: (s) {

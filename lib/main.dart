@@ -82,3 +82,23 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+class GlobalValues {
+   static List<String> _onlineSongsUrl=[];
+
+  addToList(String url) {
+    print("add to list called");
+    _onlineSongsUrl.add(url);
+  }
+
+  List<String> getList() {
+    return _onlineSongsUrl;
+  }
+
+  clearList() {
+    _onlineSongsUrl.clear();
+  }
+  printLength(){
+    print("length is ${_onlineSongsUrl.length}");
+  }
+}

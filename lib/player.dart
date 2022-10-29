@@ -1,3 +1,4 @@
+import 'package:audio_stream/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -13,6 +14,7 @@ class Player extends StatefulWidget {
 class _PlayerState extends State<Player> {
   final _player = AudioPlayer();
   bool isPlaying = false;
+  List<String> list = [];
 
   @override
   void initState() {
@@ -21,6 +23,14 @@ class _PlayerState extends State<Player> {
       statusBarColor: Colors.black,
     ));
     _init();
+    getList();
+  }
+
+  void getList() {
+    setState(() {
+      list = GlobalValues().getList();
+    });
+    print(list.length);
   }
 
   Future<void> _init() async {
@@ -72,6 +82,49 @@ class _PlayerState extends State<Player> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            list.isNotEmpty
+                ? Container(
+                    height: 30.0,
+                    width: double.infinity,
+                    child: ListView.separated(
+                      itemBuilder: (context, index) {
+                        var parts = list[index].split("/");
+                        return InkWell(
+                          child: Container(
+                            child: Text(" ${parts[4]} "),
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.blue,
+                                ),
+                                borderRadius: BorderRadius.all(Radius.circular(20))
+                            ),
+                            alignment: Alignment.center,
+                          ),
+                          onTap: () async {
+                            changeIcon();
+                            if (_player.playing) {
+                              _player.stop();
+                              await _player.setAudioSource(
+                                  AudioSource.uri(Uri.parse(list[index])));
+                              _player.play();
+                            } else {
+                              await _player.setAudioSource(
+                                  AudioSource.uri(Uri.parse(list[index])));
+                              _player.play();
+                            }
+                          },
+                        );
+                      },
+                      scrollDirection: Axis.horizontal,
+                      itemCount: list.length,
+                      separatorBuilder: (BuildContext context, int index) {
+                        return SizedBox(
+                          width: 60.0,
+                        );
+                      },
+                    ),
+                  )
+                : Text("Add songs url from browser to play songs online."),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
