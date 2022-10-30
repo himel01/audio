@@ -5,12 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-
 
   await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
   await JustAudioBackground.init(
@@ -72,10 +69,6 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
 
-
-
-
-    // set up the AlertDialog
     AlertDialog alert = AlertDialog(
       title: Text("Which one?"),
       content: Text(""),
@@ -83,7 +76,6 @@ class _MyHomePageState extends State<MyHomePage> {
       elevation: 1.0,
     );
 
-    // show the dialog
     showDialog(
       context: context,
       builder: (BuildContext context) {

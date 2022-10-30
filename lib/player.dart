@@ -33,13 +33,7 @@ class _PlayerState extends State<Player> {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.black,
     ));
-    //_init();
     getList();
-    // await player.pause();                           // Pause but remain ready to play
-    // await player.seek(Duration(second: 10));        // Jump to the 10 second position
-    // await player.setSpeed(2.0);                     // Twice as fast
-    // await player.setVolume(0.5);                    // Half as loud
-    // await player.stop();
   }
 
   Future<void> getList() async {
@@ -69,8 +63,10 @@ class _PlayerState extends State<Player> {
     await _player.setAudioSource(playlist!,
         initialIndex: 0, initialPosition: Duration.zero);
     _player.play();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("Playlist created and playing!")));
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Playlist created from saved urls and playing!")));
+
     changeIcon();
   }
 
@@ -215,7 +211,6 @@ class _PlayerState extends State<Player> {
               children: [
                 ElevatedButton(
                   onPressed: () async {
-                    //_player.play();
                     await _player.seekToPrevious();
                   },
                   child: Icon(Icons.skip_previous),
@@ -266,7 +261,6 @@ class _PlayerState extends State<Player> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    //_player.play();
                     await _player.seekToNext();
                   },
                   child: Icon(Icons.skip_next),
@@ -282,13 +276,7 @@ class _PlayerState extends State<Player> {
               children: [
                 OutlinedButton(
                   onPressed: () async {
-                    //await player.pause();                           // Pause but remain ready to play
-                    //await player.seek(Duration(second: 10));        // Jump to the 10 second position
-                    //await player.setSpeed(2.0);
-
-                    // Half as loud
                     await _player.setVolume(i = i - 0.1); // Half as loud
-                    //await player.stop();
                   },
                   child: Icon(Icons.remove),
                   style: OutlinedButton.styleFrom(

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'main.dart';
@@ -133,7 +134,6 @@ class _OfflineState extends State<Offline> {
                     width: double.infinity,
                     child: ListView.separated(
                       itemBuilder: (context, index) {
-                        //var parts = songList[index].split("/");
                         return InkWell(
                           child: Container(
                             child: Text("  ${songList[index].filename!}  "),
@@ -151,11 +151,19 @@ class _OfflineState extends State<Offline> {
                             if (_player.playing) {
                               _player.stop();
                               await _player.setAudioSource(AudioSource.uri(
-                                  Uri.file(
-                                      songList[index].savedDir +
-                                          "/" +
-                                          songList[index].filename!,
-                                      windows: false)));
+                                Uri.file(
+                                    songList[index].savedDir +
+                                        "/" +
+                                        songList[index].filename!,
+                                    windows: false),
+                                tag: MediaItem(
+                                  id: '1',
+                                  album: "Album name",
+                                  title: "Song name",
+                                  artUri: Uri.parse(
+                                      'https://example.com/albumart.jpg'),
+                                ),
+                              ));
                               _player.play();
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                   content: Text(
@@ -163,11 +171,19 @@ class _OfflineState extends State<Offline> {
                               changeIcon();
                             } else {
                               await _player.setAudioSource(AudioSource.uri(
-                                  Uri.file(
-                                      songList[index].savedDir +
-                                          "/" +
-                                          songList[index].filename!,
-                                      windows: false)));
+                                Uri.file(
+                                    songList[index].savedDir +
+                                        "/" +
+                                        songList[index].filename!,
+                                    windows: false),
+                                tag: MediaItem(
+                                  id: '1',
+                                  album: "Album name",
+                                  title: "Song name",
+                                  artUri: Uri.parse(
+                                      'https://example.com/albumart.jpg'),
+                                ),
+                              ));
                               _player.play();
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                   content: Text(
@@ -202,7 +218,6 @@ class _OfflineState extends State<Offline> {
                     total: positionData?.duration ?? Duration.zero,
                     onSeek: (duration) {
                       _player.seek(duration);
-                      print('User selected a new time: $duration');
                     },
                   ),
                 );
@@ -213,7 +228,6 @@ class _OfflineState extends State<Offline> {
               children: [
                 ElevatedButton(
                   onPressed: () async {
-                    //_player.play();
                     await _player.seekToPrevious();
                   },
                   child: Icon(Icons.skip_previous),
@@ -263,7 +277,6 @@ class _OfflineState extends State<Offline> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    //_player.play();
                     await _player.seekToNext();
                   },
                   child: Icon(Icons.skip_next),

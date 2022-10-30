@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
-import 'package:audio_stream/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path_provider/path_provider.dart';
@@ -34,7 +33,6 @@ class _BrowserState extends State<Browser> {
   }
 
   showAlertDialog(BuildContext context, String url) {
-    // set up the button
     Widget okButton = TextButton(
       child: Text("Download for Offline Player"),
       onPressed: () {
@@ -52,8 +50,6 @@ class _BrowserState extends State<Browser> {
       child: Text("Save for Online Player"),
       onPressed: () {
         addToList(url);
-        //GlobalValues().addToList(url);
-        //GlobalValues().printLength();
         Navigator.pop(context);
       },
     );
@@ -66,7 +62,6 @@ class _BrowserState extends State<Browser> {
       actions: [okButton, saveButton, noButton],
     );
 
-    // show the dialog
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -97,7 +92,7 @@ class _BrowserState extends State<Browser> {
       var granted = await Permission.storage.status;
       if (granted.isGranted) {
         // Directory? root = await getExternalStorageDirectory();
-         Directory? root = await getApplicationSupportDirectory();
+        Directory? root = await getApplicationSupportDirectory();
         String? directoryPath = root.path;
         String path = "";
         if (directoryPath != null) {
@@ -105,7 +100,6 @@ class _BrowserState extends State<Browser> {
         }
         location = path;
         final savedDir = Directory(path);
-        //String name = url.split("/")[4];
         await savedDir.create(recursive: true).then((value) async {
           final taskId = await FlutterDownloader.enqueue(
             url: url,
@@ -119,7 +113,6 @@ class _BrowserState extends State<Browser> {
         });
       }
     });
-    print("inside download");
   }
 
   @override
@@ -148,7 +141,6 @@ class _BrowserState extends State<Browser> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(
         title: Text("Browser"),
@@ -207,7 +199,6 @@ class _BrowserState extends State<Browser> {
       temp.add(u);
       prefs.setStringList("offline", temp);
     } else {
-      //prefs.remove("offline");
       temp.add(u);
       prefs.setStringList("offline", temp);
     }
@@ -237,7 +228,6 @@ class NavigationControls extends StatelessWidget {
               onPressed: !webViewReady
                   ? null
                   : () async {
-                print("called back");
                       if (await controller!.canGoBack()) {
                         await controller.goBack();
                       } else {
