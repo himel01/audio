@@ -4,11 +4,12 @@ import 'package:audio_stream/player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Plugin must be initialized before using
+
 
   await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
   // await JustAudioBackground.init(
@@ -103,7 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Expanded(
                     child: TextField(
                   controller: t,
-                      textAlign: TextAlign.center,
+                  textAlign: TextAlign.center,
                 )),
                 ElevatedButton(
                     onPressed: () {
@@ -113,10 +114,13 @@ class _MyHomePageState extends State<MyHomePage> {
                             builder: (context) => Browser(url: t.text)),
                       );
                     },
-                    child: Text("Browse Web")),SizedBox(width: 10.0),
+                    child: Text("Browse Web")),
+                SizedBox(width: 10.0),
               ],
             ),
-            SizedBox(height: 50.0,),
+            SizedBox(
+              height: 50.0,
+            ),
             ElevatedButton(
                 onPressed: () {
                   showAlertDialog(context, "");
@@ -126,26 +130,5 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
-  }
-}
-
-class GlobalValues {
-  static List<String> _onlineSongsUrl = [];
-
-  addToList(String url) {
-    print("add to list called");
-    _onlineSongsUrl.add(url);
-  }
-
-  List<String> getList() {
-    return _onlineSongsUrl;
-  }
-
-  clearList() {
-    _onlineSongsUrl.clear();
-  }
-
-  printLength() {
-    print("length is ${_onlineSongsUrl.length}");
   }
 }

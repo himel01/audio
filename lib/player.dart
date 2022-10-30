@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Player extends StatefulWidget {
   const Player({Key? key}) : super(key: key);
@@ -16,11 +17,11 @@ class Player extends StatefulWidget {
 }
 
 class _PlayerState extends State<Player> {
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   final _player = AudioPlayer();
   ConcatenatingAudioSource? playlist;
   bool isPlaying = false;
   List<String> list = [];
-
 
   var i = 0.5;
 
@@ -41,12 +42,14 @@ class _PlayerState extends State<Player> {
     // await player.stop();
   }
 
-  void getList() {
+  Future<void> getList() async {
+    final SharedPreferences prefs = await _prefs;
+    List<String> temp = prefs.getStringList("offline") ?? [];
     setState(() {
-      list = GlobalValues().getList();
+      list = temp;
     });
     print(list.length);
-    if(list.isNotEmpty){
+    if (list.isNotEmpty) {
       createPlaylist();
     }
   }
@@ -63,33 +66,12 @@ class _PlayerState extends State<Player> {
       playlist!.add(AudioSource.uri(Uri.parse(element)));
     });
 
-    await _player.setAudioSource(playlist!, initialIndex: 0, initialPosition: Duration.zero);
+    await _player.setAudioSource(playlist!,
+        initialIndex: 0, initialPosition: Duration.zero);
     _player.play();
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Playlist created and playing!")));
     changeIcon();
-  }
-
-  Future<void> _init() async {
-    final session = await AudioSession.instance;
-    await session.configure(const AudioSessionConfiguration.speech());
-    _player.playbackEventStream.listen((event) {},
-        onError: (Object e, StackTrace stackTrace) {
-      print('A stream error occurred: $e');
-    });
-    try {
-      await _player.setAudioSource(AudioSource.uri(
-        Uri.parse("https://www.harlancoben.com/audio/CaughtSample.mp3"),
-        tag: MediaItem(
-          // Specify a unique ID for each media item:
-          id: '1',
-          // Metadata to display in the notification:
-          album: "Album name",
-          title: "Song name",
-          artUri: Uri.parse('https://example.com/albumart.jpg'),
-        ),
-      ));
-    } catch (e) {
-      print("Error loading audio source: $e");
-    }
   }
 
   @override
@@ -122,7 +104,7 @@ class _PlayerState extends State<Player> {
           _player.positionStream,
           _player.bufferedPositionStream,
           _player.durationStream,
-              (position, bufferedPosition, duration) => PositionData(
+          (position, bufferedPosition, duration) => PositionData(
               position, bufferedPosition, duration ?? Duration.zero));
 
   @override
@@ -156,7 +138,6 @@ class _PlayerState extends State<Player> {
                             alignment: Alignment.center,
                           ),
                           onTap: () async {
-
                             if (_player.playing) {
                               _player.stop();
                               await _player.setAudioSource(AudioSource.uri(
@@ -172,6 +153,10 @@ class _PlayerState extends State<Player> {
                                 ),
                               ));
                               _player.play();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text("Playing from ${list[index]}")));
                             } else {
                               await _player.setAudioSource(AudioSource.uri(
                                 Uri.parse(list[index]),
@@ -186,6 +171,10 @@ class _PlayerState extends State<Player> {
                                 ),
                               ));
                               _player.play();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text("Playing from ${list[index]}")));
                             }
                             changeIcon();
                           },
@@ -201,13 +190,14 @@ class _PlayerState extends State<Player> {
                     ),
                   )
                 : Text("Add songs url from browser to play songs online."),
-            SizedBox(height: 100.0,),
+            SizedBox(
+              height: 100.0,
+            ),
             StreamBuilder<PositionData>(
               stream: _positionDataStream,
               builder: (context, snapshot) {
                 final positionData = snapshot.data;
                 return Container(
-
                   margin: EdgeInsets.only(left: 15.0, right: 15.0),
                   child: ProgressBar(
                     progress: positionData?.position ?? Duration.zero,
@@ -215,7 +205,6 @@ class _PlayerState extends State<Player> {
                     total: positionData?.duration ?? Duration.zero,
                     onSeek: (duration) {
                       _player.seek(duration);
-                      print('User selected a new time: $duration');
                     },
                   ),
                 );
@@ -339,12 +328,9 @@ class _PlayerState extends State<Player> {
                 ),
               ],
             ),
-            //ControlButtons(_player),
           ],
         ),
       ),
     );
   }
 }
-
-

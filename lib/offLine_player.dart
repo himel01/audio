@@ -33,18 +33,13 @@ class _OfflineState extends State<Offline> {
     _bindBackgroundIsolate();
     FlutterDownloader.registerCallback(downloadCallback);
     task();
-    // if (songList.isNotEmpty) {
-    //   print("songlist not empty");
-    //   createPlaylist();
-    // }
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.black,
     ));
   }
 
- Future<void> createPlaylist() async {
-    print("inside create playlist");
+  Future<void> createPlaylist() async {
     playlist = ConcatenatingAudioSource(
       useLazyPreparation: true,
       shuffleOrder: DefaultShuffleOrder(),
@@ -52,11 +47,16 @@ class _OfflineState extends State<Offline> {
     );
 
     songList.forEach((element) {
-      playlist!.add(AudioSource.uri(Uri.file(element.savedDir + "/" + element.filename!, windows: false)));
+      playlist!.add(AudioSource.uri(Uri.file(
+          element.savedDir + "/" + element.filename!,
+          windows: false)));
     });
 
-    await _player.setAudioSource(playlist!, initialIndex: 0, initialPosition: Duration.zero);
+    await _player.setAudioSource(playlist!,
+        initialIndex: 0, initialPosition: Duration.zero);
     _player.play();
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Playlist created and playing!")));
     changeIcon();
   }
 
@@ -81,21 +81,6 @@ class _OfflineState extends State<Offline> {
     send?.send([id, status, progress]);
   }
 
-  // Future<void> _init() async {
-  //   final session = await AudioSession.instance;
-  //   await session.configure(const AudioSessionConfiguration.speech());
-  //   _player.playbackEventStream.listen((event) {},
-  //       onError: (Object e, StackTrace stackTrace) {
-  //         print('A stream error occurred: $e');
-  //       });
-  //   try {
-  //     await _player.setAudioSource(AudioSource.uri(
-  //         Uri.parse("https://www.harlancoben.com/audio/CaughtSample.mp3")));
-  //   } catch (e) {
-  //     print("Error loading audio source: $e");
-  //   }
-  // }
-
   @override
   void dispose() {
     _player.dispose();
@@ -113,7 +98,6 @@ class _OfflineState extends State<Offline> {
       });
     }
   }
-
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -173,6 +157,9 @@ class _OfflineState extends State<Offline> {
                                           songList[index].filename!,
                                       windows: false)));
                               _player.play();
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: Text(
+                                      "Playing ${songList[index].filename!}")));
                               changeIcon();
                             } else {
                               await _player.setAudioSource(AudioSource.uri(
@@ -182,6 +169,9 @@ class _OfflineState extends State<Offline> {
                                           songList[index].filename!,
                                       windows: false)));
                               _player.play();
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: Text(
+                                      "Playing ${songList[index].filename!}")));
                               changeIcon();
                             }
                           },
@@ -200,17 +190,6 @@ class _OfflineState extends State<Offline> {
             SizedBox(
               height: 100.0,
             ),
-            // Container(
-            //   margin: EdgeInsets.only(left: 15.0,right: 15.0),
-            //   child: ProgressBar(
-            //     progress: Duration(milliseconds: 1000),
-            //     buffered: Duration(milliseconds: 2000),
-            //     total: Duration(milliseconds: 5000),
-            //     onSeek: (duration) {
-            //       print('User selected a new time: $duration');
-            //     },
-            //   ),
-            // ),
             StreamBuilder<PositionData>(
               stream: _positionDataStream,
               builder: (context, snapshot) {
@@ -300,13 +279,7 @@ class _OfflineState extends State<Offline> {
               children: [
                 OutlinedButton(
                   onPressed: () async {
-                    //await player.pause();                           // Pause but remain ready to play
-                    //await player.seek(Duration(second: 10));        // Jump to the 10 second position
-                    //await player.setSpeed(2.0);
-
-                    // Half as loud
                     await _player.setVolume(i = i - 0.1); // Half as loud
-                    //await player.stop();
                   },
                   child: Icon(Icons.remove),
                   style: OutlinedButton.styleFrom(
@@ -366,7 +339,7 @@ class _OfflineState extends State<Offline> {
         }
       });
     }
-    if(songList.isNotEmpty){
+    if (songList.isNotEmpty) {
       createPlaylist();
     }
   }

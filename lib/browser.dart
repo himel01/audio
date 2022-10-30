@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class Browser extends StatefulWidget with WidgetsBindingObserver {
@@ -19,6 +20,7 @@ class Browser extends StatefulWidget with WidgetsBindingObserver {
 }
 
 class _BrowserState extends State<Browser> {
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   ReceivePort _port = ReceivePort();
   String location = "";
 
@@ -46,8 +48,9 @@ class _BrowserState extends State<Browser> {
     Widget saveButton = TextButton(
       child: Text("Save for Online Player"),
       onPressed: () {
-        GlobalValues().addToList(url);
-        GlobalValues().printLength();
+        addToList(url);
+        //GlobalValues().addToList(url);
+        //GlobalValues().printLength();
         Navigator.pop(context);
       },
     );
@@ -101,12 +104,12 @@ class _BrowserState extends State<Browser> {
         //String name = url.split("/")[4];
         await savedDir.create(recursive: true).then((value) async {
           final taskId = await FlutterDownloader.enqueue(
-              url: url,
-              headers: {},
-              savedDir: path,
-              showNotification: true,
-              openFileFromNotification: true,
-              //saveInPublicStorage: true,
+            url: url,
+            headers: {},
+            savedDir: path,
+            showNotification: true,
+            openFileFromNotification: true,
+            //saveInPublicStorage: true,
           );
           print("task id is $taskId");
         });
@@ -180,5 +183,18 @@ class _BrowserState extends State<Browser> {
           ),
       ],
     );
+  }
+
+  void addToList(String u) async {
+    final SharedPreferences prefs = await _prefs;
+    List<String> temp = prefs.getStringList("offline") ?? [];
+    if (temp.isEmpty) {
+      temp.add(u);
+      prefs.setStringList("offline", temp);
+    } else {
+      //prefs.remove("offline");
+      temp.add(u);
+      prefs.setStringList("offline", temp);
+    }
   }
 }
