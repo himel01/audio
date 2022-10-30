@@ -4,6 +4,7 @@ import 'package:audio_stream/player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
@@ -71,6 +72,9 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
 
+
+
+
     // set up the AlertDialog
     AlertDialog alert = AlertDialog(
       title: Text("Which one?"),
@@ -86,6 +90,20 @@ class _MyHomePageState extends State<MyHomePage> {
         return alert;
       },
     );
+  }
+
+  getPermission() async {
+    var status = await Permission.storage.status;
+    if (status.isDenied || status.isRestricted) {
+      Permission.storage.request();
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    getPermission();
+    super.initState();
   }
 
   @override
