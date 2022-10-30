@@ -99,9 +99,11 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Row(
               children: [
+                SizedBox(width: 10.0),
                 Expanded(
                     child: TextField(
                   controller: t,
+                      textAlign: TextAlign.center,
                 )),
                 ElevatedButton(
                     onPressed: () {
@@ -111,9 +113,10 @@ class _MyHomePageState extends State<MyHomePage> {
                             builder: (context) => Browser(url: t.text)),
                       );
                     },
-                    child: Text("Browse Web")),
+                    child: Text("Browse Web")),SizedBox(width: 10.0),
               ],
             ),
+            SizedBox(height: 50.0,),
             ElevatedButton(
                 onPressed: () {
                   showAlertDialog(context, "");

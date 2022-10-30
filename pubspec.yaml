@@ -40,6 +40,9 @@ dependencies:
   permission_handler: ^10.2.0
   path_provider: ^2.0.11
   just_audio_background: ^0.0.1-beta.7
+  audio_video_progress_bar: ^0.11.0
+  rxdart: ^0.27.5
+
 
 dev_dependencies:
   flutter_test:

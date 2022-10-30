@@ -1,9 +1,12 @@
 import 'package:audio_stream/main.dart';
+import 'package:audio_stream/offLine_player.dart';
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:rxdart/rxdart.dart';
 
 class Player extends StatefulWidget {
   const Player({Key? key}) : super(key: key);
@@ -14,6 +17,7 @@ class Player extends StatefulWidget {
 
 class _PlayerState extends State<Player> {
   final _player = AudioPlayer();
+  ConcatenatingAudioSource? playlist;
   bool isPlaying = false;
   List<String> list = [];
 
@@ -28,7 +32,7 @@ class _PlayerState extends State<Player> {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.black,
     ));
-    _init();
+    //_init();
     getList();
     // await player.pause();                           // Pause but remain ready to play
     // await player.seek(Duration(second: 10));        // Jump to the 10 second position
@@ -42,6 +46,26 @@ class _PlayerState extends State<Player> {
       list = GlobalValues().getList();
     });
     print(list.length);
+    if(list.isNotEmpty){
+      createPlaylist();
+    }
+  }
+
+  Future<void> createPlaylist() async {
+    print("inside create playlist");
+    playlist = ConcatenatingAudioSource(
+      useLazyPreparation: true,
+      shuffleOrder: DefaultShuffleOrder(),
+      children: [],
+    );
+
+    list.forEach((element) {
+      playlist!.add(AudioSource.uri(Uri.parse(element)));
+    });
+
+    await _player.setAudioSource(playlist!, initialIndex: 0, initialPosition: Duration.zero);
+    _player.play();
+    changeIcon();
   }
 
   Future<void> _init() async {
@@ -77,11 +101,11 @@ class _PlayerState extends State<Player> {
   changeIcon() {
     if (_player.playing) {
       setState(() {
-        isPlaying = false;
+        isPlaying = true;
       });
     } else {
       setState(() {
-        isPlaying = true;
+        isPlaying = false;
       });
     }
   }
@@ -92,6 +116,14 @@ class _PlayerState extends State<Player> {
       _player.stop();
     }
   }
+
+  Stream<PositionData> get _positionDataStream =>
+      Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
+          _player.positionStream,
+          _player.bufferedPositionStream,
+          _player.durationStream,
+              (position, bufferedPosition, duration) => PositionData(
+              position, bufferedPosition, duration ?? Duration.zero));
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +146,7 @@ class _PlayerState extends State<Player> {
                         var parts = list[index].split("/");
                         return InkWell(
                           child: Container(
-                            child: Text(" ${parts[4]} "),
+                            child: Text("  ${parts[4]}  "),
                             decoration: BoxDecoration(
                                 border: Border.all(
                                   color: Colors.blue,
@@ -124,7 +156,7 @@ class _PlayerState extends State<Player> {
                             alignment: Alignment.center,
                           ),
                           onTap: () async {
-                            changeIcon();
+
                             if (_player.playing) {
                               _player.stop();
                               await _player.setAudioSource(AudioSource.uri(
@@ -155,6 +187,7 @@ class _PlayerState extends State<Player> {
                               ));
                               _player.play();
                             }
+                            changeIcon();
                           },
                         );
                       },
@@ -169,6 +202,25 @@ class _PlayerState extends State<Player> {
                   )
                 : Text("Add songs url from browser to play songs online."),
             SizedBox(height: 100.0,),
+            StreamBuilder<PositionData>(
+              stream: _positionDataStream,
+              builder: (context, snapshot) {
+                final positionData = snapshot.data;
+                return Container(
+
+                  margin: EdgeInsets.only(left: 15.0, right: 15.0),
+                  child: ProgressBar(
+                    progress: positionData?.position ?? Duration.zero,
+                    buffered: positionData?.bufferedPosition ?? Duration.zero,
+                    total: positionData?.duration ?? Duration.zero,
+                    onSeek: (duration) {
+                      _player.seek(duration);
+                      print('User selected a new time: $duration');
+                    },
+                  ),
+                );
+              },
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -202,6 +254,7 @@ class _PlayerState extends State<Player> {
                     } else {
                       _player.play();
                     }
+                    changeIcon();
                   },
                   child: isPlaying
                       ? Icon(Icons.pause)

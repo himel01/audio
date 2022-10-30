@@ -1,10 +1,12 @@
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:rxdart/rxdart.dart';
 
 import 'main.dart';
 
@@ -17,6 +19,7 @@ class Offline extends StatefulWidget {
 
 class _OfflineState extends State<Offline> {
   ReceivePort _port = ReceivePort();
+  ConcatenatingAudioSource? playlist;
   final _player = AudioPlayer();
   bool isPlaying = false;
   List<String> list = [];
@@ -30,10 +33,31 @@ class _OfflineState extends State<Offline> {
     _bindBackgroundIsolate();
     FlutterDownloader.registerCallback(downloadCallback);
     task();
+    // if (songList.isNotEmpty) {
+    //   print("songlist not empty");
+    //   createPlaylist();
+    // }
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.black,
     ));
+  }
+
+ Future<void> createPlaylist() async {
+    print("inside create playlist");
+    playlist = ConcatenatingAudioSource(
+      useLazyPreparation: true,
+      shuffleOrder: DefaultShuffleOrder(),
+      children: [],
+    );
+
+    songList.forEach((element) {
+      playlist!.add(AudioSource.uri(Uri.file(element.savedDir + "/" + element.filename!, windows: false)));
+    });
+
+    await _player.setAudioSource(playlist!, initialIndex: 0, initialPosition: Duration.zero);
+    _player.play();
+    changeIcon();
   }
 
   void _unbindBackgroundIsolate() {
@@ -90,12 +114,21 @@ class _OfflineState extends State<Offline> {
     }
   }
 
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       _player.stop();
     }
   }
+
+  Stream<PositionData> get _positionDataStream =>
+      Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
+          _player.positionStream,
+          _player.bufferedPositionStream,
+          _player.durationStream,
+          (position, bufferedPosition, duration) => PositionData(
+              position, bufferedPosition, duration ?? Duration.zero));
 
   @override
   Widget build(BuildContext context) {
@@ -166,6 +199,35 @@ class _OfflineState extends State<Offline> {
                 : Text("Download songs from browser to play songs offline."),
             SizedBox(
               height: 100.0,
+            ),
+            // Container(
+            //   margin: EdgeInsets.only(left: 15.0,right: 15.0),
+            //   child: ProgressBar(
+            //     progress: Duration(milliseconds: 1000),
+            //     buffered: Duration(milliseconds: 2000),
+            //     total: Duration(milliseconds: 5000),
+            //     onSeek: (duration) {
+            //       print('User selected a new time: $duration');
+            //     },
+            //   ),
+            // ),
+            StreamBuilder<PositionData>(
+              stream: _positionDataStream,
+              builder: (context, snapshot) {
+                final positionData = snapshot.data;
+                return Container(
+                  margin: EdgeInsets.only(left: 15.0, right: 15.0),
+                  child: ProgressBar(
+                    progress: positionData?.position ?? Duration.zero,
+                    buffered: positionData?.bufferedPosition ?? Duration.zero,
+                    total: positionData?.duration ?? Duration.zero,
+                    onSeek: (duration) {
+                      _player.seek(duration);
+                      print('User selected a new time: $duration');
+                    },
+                  ),
+                );
+              },
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -304,5 +366,16 @@ class _OfflineState extends State<Offline> {
         }
       });
     }
+    if(songList.isNotEmpty){
+      createPlaylist();
+    }
   }
+}
+
+class PositionData {
+  Duration position;
+  Duration bufferedPosition;
+  Duration duration;
+
+  PositionData(this.position, this.bufferedPosition, this.duration);
 }
