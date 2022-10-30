@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
@@ -21,6 +22,8 @@ class Browser extends StatefulWidget with WidgetsBindingObserver {
 
 class _BrowserState extends State<Browser> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  final Completer<WebViewController> _controller =
+      Completer<WebViewController>();
   ReceivePort _port = ReceivePort();
   String location = "";
 
@@ -93,8 +96,9 @@ class _BrowserState extends State<Browser> {
     getPermission().then((value) async {
       var granted = await Permission.storage.status;
       if (granted.isGranted) {
-        Directory? root = await getExternalStorageDirectory();
-        String? directoryPath = root?.path;
+        // Directory? root = await getExternalStorageDirectory();
+         Directory? root = await getApplicationSupportDirectory();
+        String? directoryPath = root.path;
         String path = "";
         if (directoryPath != null) {
           path = '$directoryPath/audio_player';
@@ -145,43 +149,54 @@ class _BrowserState extends State<Browser> {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        WebView(
-          initialUrl: widget.url,
-          javascriptMode: JavascriptMode.unrestricted,
-          allowsInlineMediaPlayback: true,
-          onPageStarted: (value) {
-            print("started");
-            setState(() {
-              loadingPercentage = 0;
-            });
-            print(value);
-            if (value.contains(".mp3")) {
-              showAlertDialog(context, value);
-              //downLoad(value);
-            }
-          },
-          onPageFinished: (s) {
-            print("finished");
-            setState(() {
-              loadingPercentage = 100;
-            });
-          },
-          onProgress: (i) {
-            setState(() {
-              loadingPercentage = i;
-            });
-          },
-        ),
-        if (loadingPercentage < 100)
-          CircularProgressIndicator(
-            value: loadingPercentage / 100.0,
-            color: Colors.blue,
-            backgroundColor: Colors.orange,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Browser"),
+        actions: [
+          NavigationControls(_controller.future),
+        ],
+      ),
+      body: Stack(
+        alignment: Alignment.center,
+        children: [
+          WebView(
+            initialUrl: widget.url,
+            javascriptMode: JavascriptMode.unrestricted,
+            allowsInlineMediaPlayback: true,
+            onWebViewCreated: (WebViewController webViewController) {
+              _controller.complete(webViewController);
+            },
+            onPageStarted: (value) {
+              print("started");
+              setState(() {
+                loadingPercentage = 0;
+              });
+              print(value);
+              if (value.contains(".mp3")) {
+                showAlertDialog(context, value);
+                //downLoad(value);
+              }
+            },
+            onPageFinished: (s) {
+              print("finished");
+              setState(() {
+                loadingPercentage = 100;
+              });
+            },
+            onProgress: (i) {
+              setState(() {
+                loadingPercentage = i;
+              });
+            },
           ),
-      ],
+          if (loadingPercentage < 100)
+            CircularProgressIndicator(
+              value: loadingPercentage / 100.0,
+              color: Colors.blue,
+              backgroundColor: Colors.orange,
+            ),
+        ],
+      ),
     );
   }
 
@@ -196,5 +211,70 @@ class _BrowserState extends State<Browser> {
       temp.add(u);
       prefs.setStringList("offline", temp);
     }
+  }
+}
+
+class NavigationControls extends StatelessWidget {
+  const NavigationControls(this._webViewControllerFuture, {Key? key})
+      : assert(_webViewControllerFuture != null),
+        super(key: key);
+
+  final Future<WebViewController> _webViewControllerFuture;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<WebViewController>(
+      future: _webViewControllerFuture,
+      builder:
+          (BuildContext context, AsyncSnapshot<WebViewController> snapshot) {
+        final bool webViewReady =
+            snapshot.connectionState == ConnectionState.done;
+        final WebViewController? controller = snapshot.data;
+        return Row(
+          children: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios),
+              onPressed: !webViewReady
+                  ? null
+                  : () async {
+                print("called back");
+                      if (await controller!.canGoBack()) {
+                        await controller.goBack();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('No back history item')),
+                        );
+                        return;
+                      }
+                    },
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_forward_ios),
+              onPressed: !webViewReady
+                  ? null
+                  : () async {
+                      if (await controller!.canGoForward()) {
+                        await controller.goForward();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('No forward history item')),
+                        );
+                        return;
+                      }
+                    },
+            ),
+            IconButton(
+              icon: const Icon(Icons.replay),
+              onPressed: !webViewReady
+                  ? null
+                  : () {
+                      controller!.reload();
+                    },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
